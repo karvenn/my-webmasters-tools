@@ -209,8 +209,9 @@ class PublicFormController extends Controller
         $content = file_get_contents($widgetPath);
         
         // Replace placeholders with form customization values
+        $baseUrl = env('EMBED_BASE_URL', config('app.url'));
         $replacements = [
-            '{{API_URL}}' => config('app.url') . '/api/submit/' . $token,
+            '{{API_URL}}' => $baseUrl . '/api/submit/' . $token,
             '{{BUTTON_COLOR}}' => $form->button_color ?? '#3b82f6',
             '{{BUTTON_TEXT_COLOR}}' => $form->button_text_color ?? '#ffffff',
             '{{BUTTON_SIZE}}' => $form->button_size ?? 'medium',

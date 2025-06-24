@@ -145,7 +145,8 @@ class FormController extends Controller
 
     protected function generateEmbedCode(Form $form): string
     {
-        $baseUrl = config('app.url');
+        // Use EMBED_BASE_URL if set, otherwise fallback to APP_URL
+        $baseUrl = env('EMBED_BASE_URL', config('app.url'));
         return '<script src="' . $baseUrl . '/embed/widget.js?token=' . $form->embed_token . '"></script>';
     }
 }
