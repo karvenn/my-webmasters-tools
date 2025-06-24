@@ -12,6 +12,10 @@
 
     // Create styles
     const styles = `
+        #${WIDGET_ID} * {
+            box-sizing: border-box;
+        }
+        
         #${WIDGET_ID} {
             position: fixed;
             ${BUTTON_POSITION === 'bottom-right' ? 'bottom: 20px; right: 20px;' : ''}
@@ -46,12 +50,14 @@
             ${BUTTON_POSITION.includes('right') ? 'right: -400px;' : 'left: -400px;'}
             top: 0;
             width: 400px;
+            max-width: 100vw;
             height: 100%;
             background: white;
             box-shadow: ${BUTTON_POSITION.includes('right') ? '-2px' : '2px'} 0 12px rgba(0, 0, 0, 0.1);
             transition: ${BUTTON_POSITION.includes('right') ? 'right' : 'left'} 0.3s ease;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
         #${WIDGET_ID} .uat-drawer.open {
@@ -84,6 +90,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
+            margin-left: 8px;
         }
 
         #${WIDGET_ID} .uat-instructions {
@@ -100,6 +108,8 @@
             padding: 0 20px 20px 20px;
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
         }
 
         #${WIDGET_ID} .uat-field {
@@ -125,6 +135,7 @@
             transition: border-color 0.2s;
             color: #1f2937;
             background-color: white;
+            box-sizing: border-box;
         }
 
         #${WIDGET_ID} .uat-input:focus,
@@ -253,6 +264,48 @@
             #${WIDGET_ID} .uat-drawer {
                 width: 100%;
                 ${BUTTON_POSITION.includes('right') ? 'right: -100%;' : 'left: -100%;'}
+            }
+            
+            #${WIDGET_ID} .uat-header {
+                padding: 16px;
+            }
+            
+            #${WIDGET_ID} .uat-title {
+                font-size: 18px;
+            }
+            
+            #${WIDGET_ID} .uat-instructions {
+                margin: 16px;
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            #${WIDGET_ID} .uat-form {
+                padding: 0 16px 16px 16px;
+            }
+            
+            #${WIDGET_ID} .uat-field {
+                margin-bottom: 16px;
+            }
+            
+            #${WIDGET_ID} .uat-label {
+                font-size: 13px;
+            }
+            
+            #${WIDGET_ID} .uat-input,
+            #${WIDGET_ID} .uat-textarea,
+            #${WIDGET_ID} .uat-select {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            #${WIDGET_ID} .uat-file-button {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+            
+            #${WIDGET_ID} .uat-submit {
+                font-size: 15px;
+                padding: 12px 20px;
             }
         }
     `;
