@@ -1,0 +1,658 @@
+(function() {
+    'use strict';
+
+    // Widget configuration
+    const API_URL = '{{API_URL}}';
+    const WIDGET_ID = 'uat-feedback-widget-' + Math.random().toString(36).substr(2, 9);
+
+    // Create styles
+    const styles = `
+        #${WIDGET_ID} {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        #${WIDGET_ID} .uat-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        #${WIDGET_ID} .uat-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #${WIDGET_ID} .uat-drawer {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 12px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #${WIDGET_ID} .uat-drawer.open {
+            right: 0;
+        }
+
+        #${WIDGET_ID} .uat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #${WIDGET_ID} .uat-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        #${WIDGET_ID} .uat-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #${WIDGET_ID} .uat-instructions {
+            background: #f3f4f6;
+            padding: 12px 16px;
+            margin: 20px 20px 20px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #4b5563;
+            line-height: 1.5;
+        }
+
+        #${WIDGET_ID} .uat-form {
+            padding: 0 20px 20px 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        #${WIDGET_ID} .uat-field {
+            margin-bottom: 20px;
+        }
+
+        #${WIDGET_ID} .uat-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        #${WIDGET_ID} .uat-input,
+        #${WIDGET_ID} .uat-textarea,
+        #${WIDGET_ID} .uat-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            color: #1f2937;
+            background-color: white;
+        }
+
+        #${WIDGET_ID} .uat-input:focus,
+        #${WIDGET_ID} .uat-textarea:focus,
+        #${WIDGET_ID} .uat-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        #${WIDGET_ID} .uat-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        #${WIDGET_ID} .uat-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        #${WIDGET_ID} .uat-file-input {
+            display: none;
+        }
+
+        #${WIDGET_ID} .uat-file-button {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #374151;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        #${WIDGET_ID} .uat-file-button:hover {
+            background: #e5e7eb;
+        }
+
+        #${WIDGET_ID} .uat-file-list {
+            margin-top: 10px;
+        }
+
+        #${WIDGET_ID} .uat-file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        #${WIDGET_ID} .uat-file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 10px;
+            color: #374151;
+        }
+
+        #${WIDGET_ID} .uat-file-size {
+            font-size: 12px;
+            color: #6b7280;
+            margin-right: 10px;
+        }
+
+        #${WIDGET_ID} .uat-file-remove {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #${WIDGET_ID} .uat-submit {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        #${WIDGET_ID} .uat-submit:hover {
+            background: #2563eb;
+        }
+
+        #${WIDGET_ID} .uat-submit:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        #${WIDGET_ID} .uat-success {
+            padding: 20px;
+            text-align: center;
+            color: #059669;
+        }
+
+        #${WIDGET_ID} .uat-error {
+            color: #dc2626;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 480px) {
+            #${WIDGET_ID} .uat-drawer {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    `;
+
+    // Inject styles
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
+
+    // Create widget HTML
+    const widgetHTML = `
+        <div id="${WIDGET_ID}">
+            <button class="uat-btn" id="uat-open-btn">Report Issue</button>
+            <div class="uat-drawer" id="uat-drawer">
+                <div class="uat-header">
+                    <h3 class="uat-title">Report an Issue</h3>
+                    <button class="uat-close" id="uat-close-btn">&times;</button>
+                </div>
+                <div class="uat-instructions">
+                    <strong>Help us improve!</strong> Please describe any issues you're experiencing on this page. You can attach files (images, documents, etc.) and set the priority level.
+                </div>
+                <form class="uat-form" id="uat-form">
+                    <div class="uat-field">
+                        <label class="uat-label" for="uat-description">Issue Description *</label>
+                        <textarea class="uat-textarea" id="uat-description" name="issue_description" required placeholder="Please describe the issue you're experiencing..."></textarea>
+                    </div>
+                    
+                    <div class="uat-field">
+                        <label class="uat-label" for="uat-attachments">Attachments (Optional)</label>
+                        <input type="file" class="uat-file-input" id="uat-file-input" multiple accept="image/*,.pdf,.doc,.docx,.txt">
+                        <button type="button" class="uat-file-button" id="uat-file-button">📎 Choose Files</button>
+                        <div class="uat-file-list" id="uat-file-list"></div>
+                    </div>
+                    
+                    <div class="uat-field">
+                        <label class="uat-label" for="uat-priority">Priority *</label>
+                        <select class="uat-select" id="uat-priority" name="priority" required>
+                            <option value="">Select priority</option>
+                            <option value="low">Low - Minor issue</option>
+                            <option value="medium">Medium - Affects usage</option>
+                            <option value="high">High - Critical issue</option>
+                        </select>
+                    </div>
+                    
+                    <div class="uat-field">
+                        <label class="uat-label" for="uat-name">Your Name *</label>
+                        <input type="text" class="uat-input" id="uat-name" name="submitter_name" required placeholder="John Doe">
+                    </div>
+                    
+                    <div class="uat-field">
+                        <label class="uat-label" for="uat-email">Your Email *</label>
+                        <input type="email" class="uat-input" id="uat-email" name="submitter_email" required placeholder="john@example.com">
+                    </div>
+                    
+                    <div class="uat-field">
+                        <button type="submit" class="uat-submit" id="uat-submit-btn">Submit Feedback</button>
+                    </div>
+                </form>
+                <div class="uat-success" id="uat-success" style="display: none;">
+                    <h3>Thank you!</h3>
+                    <p>Your feedback has been submitted successfully.</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Insert widget into page
+    const widgetContainer = document.createElement('div');
+    widgetContainer.innerHTML = widgetHTML;
+    document.body.appendChild(widgetContainer.firstElementChild);
+
+    // Get elements
+    const openBtn = document.getElementById('uat-open-btn');
+    const closeBtn = document.getElementById('uat-close-btn');
+    const drawer = document.getElementById('uat-drawer');
+    const form = document.getElementById('uat-form');
+    const submitBtn = document.getElementById('uat-submit-btn');
+    const successMsg = document.getElementById('uat-success');
+    const fileInput = document.getElementById('uat-file-input');
+    const fileButton = document.getElementById('uat-file-button');
+    const fileList = document.getElementById('uat-file-list');
+    const nameInput = document.getElementById('uat-name');
+    const emailInput = document.getElementById('uat-email');
+
+    // Store selected files
+    let selectedFiles = [];
+
+    // Load saved name and email from localStorage
+    const savedName = localStorage.getItem('uat_submitter_name');
+    const savedEmail = localStorage.getItem('uat_submitter_email');
+    if (savedName) nameInput.value = savedName;
+    if (savedEmail) emailInput.value = savedEmail;
+
+    // Event listeners
+    openBtn.addEventListener('click', () => {
+        drawer.classList.add('open');
+    });
+
+    closeBtn.addEventListener('click', () => {
+        drawer.classList.remove('open');
+    });
+
+    // Click outside to close
+    drawer.addEventListener('click', (e) => {
+        if (e.target === drawer) {
+            drawer.classList.remove('open');
+        }
+    });
+
+    // File selection
+    fileButton.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            // Check file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+                return;
+            }
+            
+            // Check if file already exists
+            if (!selectedFiles.find(f => f.name === file.name)) {
+                selectedFiles.push(file);
+            }
+        });
+        updateFileList();
+        fileInput.value = ''; // Reset input
+    });
+
+    // Update file list display
+    function updateFileList() {
+        fileList.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const item = document.createElement('div');
+            item.className = 'uat-file-item';
+            
+            const name = document.createElement('span');
+            name.className = 'uat-file-name';
+            name.textContent = file.name;
+            
+            const size = document.createElement('span');
+            size.className = 'uat-file-size';
+            size.textContent = formatFileSize(file.size);
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'uat-file-remove';
+            removeBtn.innerHTML = '×';
+            removeBtn.onclick = () => {
+                selectedFiles.splice(index, 1);
+                updateFileList();
+            };
+            
+            item.appendChild(name);
+            item.appendChild(size);
+            item.appendChild(removeBtn);
+            fileList.appendChild(item);
+        });
+    }
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // Convert file to base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Get browser information
+    function getBrowserInfo() {
+        const ua = navigator.userAgent;
+        let browserName = 'Unknown';
+        let browserVersion = 'Unknown';
+        
+        // Detect browser
+        if (ua.includes('Firefox/')) {
+            browserName = 'Firefox';
+            browserVersion = ua.match(/Firefox\/(\d+\.?\d*)/)?.[1] || 'Unknown';
+        } else if (ua.includes('Chrome/') && !ua.includes('Edg/')) {
+            browserName = 'Chrome';
+            browserVersion = ua.match(/Chrome\/(\d+\.?\d*)/)?.[1] || 'Unknown';
+        } else if (ua.includes('Safari/') && !ua.includes('Chrome')) {
+            browserName = 'Safari';
+            browserVersion = ua.match(/Version\/(\d+\.?\d*)/)?.[1] || 'Unknown';
+        } else if (ua.includes('Edg/')) {
+            browserName = 'Edge';
+            browserVersion = ua.match(/Edg\/(\d+\.?\d*)/)?.[1] || 'Unknown';
+        }
+        
+        return { browserName, browserVersion };
+    }
+
+    // Get operating system
+    function getOperatingSystem() {
+        const ua = navigator.userAgent;
+        const platform = navigator.platform;
+        
+        if (ua.includes('Windows NT 10.0')) return 'Windows 10';
+        if (ua.includes('Windows NT 11.0')) return 'Windows 11';
+        if (ua.includes('Mac OS X')) {
+            const match = ua.match(/Mac OS X (\d+[._]\d+)/);
+            return match ? `macOS ${match[1].replace('_', '.')}` : 'macOS';
+        }
+        if (ua.includes('Android')) {
+            const match = ua.match(/Android (\d+\.?\d*)/);
+            return match ? `Android ${match[1]}` : 'Android';
+        }
+        if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) {
+            const match = ua.match(/OS (\d+[._]\d+)/);
+            return match ? `iOS ${match[1].replace('_', '.')}` : 'iOS';
+        }
+        if (ua.includes('Linux')) return 'Linux';
+        
+        return platform || 'Unknown';
+    }
+
+    // Get device type
+    function getDeviceType() {
+        const ua = navigator.userAgent;
+        const isMobile = /Mobile|Android|iPhone|iPad|iPod/i.test(ua);
+        const isTablet = /iPad|Android.*Tablet|Tablet.*Android/i.test(ua);
+        
+        if (isTablet) return 'Tablet';
+        if (isMobile) return 'Mobile';
+        return 'Desktop';
+    }
+
+    // Collect all metadata
+    function collectMetadata() {
+        const { browserName, browserVersion } = getBrowserInfo();
+        const operatingSystem = getOperatingSystem();
+        const deviceType = getDeviceType();
+        
+        // Basic metadata
+        const metadata = {
+            // Browser and Device
+            browser_name: browserName,
+            browser_version: browserVersion,
+            operating_system: operatingSystem,
+            device_type: deviceType,
+            
+            // Screen and Viewport
+            screen_resolution: `${screen.width}x${screen.height}`,
+            viewport_size: `${window.innerWidth}x${window.innerHeight}`,
+            
+            // Technical metadata
+            technical_metadata: {
+                // Screen details
+                pixel_ratio: window.devicePixelRatio || 1,
+                color_depth: screen.colorDepth,
+                orientation: screen.orientation?.type || 'unknown',
+                
+                // Window details
+                window_outer_size: `${window.outerWidth}x${window.outerHeight}`,
+                scroll_position: `${window.pageXOffset},${window.pageYOffset}`,
+                
+                // Performance
+                page_load_time: performance.timing ? 
+                    (performance.timing.loadEventEnd - performance.timing.navigationStart) : null,
+                dom_ready_time: performance.timing ? 
+                    (performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart) : null,
+                
+                // Browser features
+                cookies_enabled: navigator.cookieEnabled,
+                do_not_track: navigator.doNotTrack || 'unspecified',
+                language: navigator.language,
+                languages: navigator.languages || [navigator.language],
+                platform: navigator.platform,
+                
+                // Network
+                online_status: navigator.onLine,
+                connection_type: navigator.connection?.effectiveType || 'unknown',
+                
+                // Page info
+                referrer: document.referrer || 'direct',
+                page_title: document.title,
+                
+                // User preferences
+                prefers_color_scheme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+                prefers_reduced_motion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+                
+                // Time
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timezone_offset: new Date().getTimezoneOffset(),
+                timestamp: new Date().toISOString()
+            }
+        };
+        
+        // Add console errors if any
+        if (window.__uatConsoleErrors && window.__uatConsoleErrors.length > 0) {
+            metadata.technical_metadata.console_errors = window.__uatConsoleErrors.slice(-10); // Last 10 errors
+        }
+        
+        return metadata;
+    }
+
+    // Capture console errors
+    window.__uatConsoleErrors = [];
+    const originalError = console.error;
+    console.error = function(...args) {
+        window.__uatConsoleErrors.push({
+            message: args.join(' '),
+            timestamp: new Date().toISOString()
+        });
+        originalError.apply(console, args);
+    };
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Save name and email to localStorage
+        localStorage.setItem('uat_submitter_name', nameInput.value);
+        localStorage.setItem('uat_submitter_email', emailInput.value);
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        const formData = new FormData(form);
+        
+        // Convert files to base64
+        const attachments = [];
+        for (const file of selectedFiles) {
+            try {
+                const base64Data = await fileToBase64(file);
+                attachments.push({
+                    name: file.name,
+                    data: base64Data
+                });
+            } catch (error) {
+                console.error('Error converting file:', error);
+            }
+        }
+
+        // Collect all metadata
+        const metadata = collectMetadata();
+        
+        const data = {
+            issue_description: formData.get('issue_description'),
+            priority: formData.get('priority'),
+            submitter_name: formData.get('submitter_name'),
+            submitter_email: formData.get('submitter_email'),
+            page_url: window.location.href,
+            attachments: attachments,
+            ...metadata // Spread all metadata fields
+        };
+
+        console.log('UAT Widget - Submitting data:', data);
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                form.style.display = 'none';
+                successMsg.style.display = 'block';
+                
+                // Reset form after 3 seconds and close drawer
+                setTimeout(() => {
+                    form.reset();
+                    // Keep name and email
+                    nameInput.value = localStorage.getItem('uat_submitter_name') || '';
+                    emailInput.value = localStorage.getItem('uat_submitter_email') || '';
+                    selectedFiles = [];
+                    updateFileList();
+                    form.style.display = 'block';
+                    successMsg.style.display = 'none';
+                    drawer.classList.remove('open');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Feedback';
+                }, 3000);
+            } else {
+                // Handle validation errors
+                if (response.status === 422 && result.errors) {
+                    let errorMessage = 'Please fix the following errors:\n';
+                    for (const field in result.errors) {
+                        errorMessage += `\n${field}: ${result.errors[field].join(', ')}`;
+                    }
+                    throw new Error(errorMessage);
+                } else {
+                    throw new Error(result.message || result.error || 'Submission failed');
+                }
+            }
+        } catch (error) {
+            console.error('UAT Widget Error:', error);
+            console.error('API URL:', API_URL);
+            alert('Error submitting feedback: ' + error.message + '\nCheck console for details.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Feedback';
+        }
+    });
+})();
