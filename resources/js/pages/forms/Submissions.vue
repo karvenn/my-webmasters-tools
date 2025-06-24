@@ -20,7 +20,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, Link } from '@inertiajs/vue3';
 import { 
     Calendar, 
     Check, 
@@ -46,7 +46,8 @@ import {
     Maximize2,
     Wifi,
     Globe,
-    AlertTriangle
+    AlertTriangle,
+    Edit
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
@@ -307,6 +308,13 @@ const summaryStats = computed(() => ({
                     <p class="text-sm text-muted-foreground">{{ form.website_url }}</p>
                 </div>
                 <div class="flex gap-2">
+                    <Button as-child variant="outline">
+                        <Link :href="route('forms.edit', form.id)">
+                            <Edit class="mr-2 h-4 w-4" />
+                            <span class="hidden sm:inline">Edit Form</span>
+                            <span class="sm:hidden">Edit</span>
+                        </Link>
+                    </Button>
                     <Button @click="showEmbedDialog = true" variant="outline">
                         <Copy class="mr-2 h-4 w-4" />
                         <span class="hidden sm:inline">Embed Code</span>

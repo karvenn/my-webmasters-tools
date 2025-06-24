@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Eye, Plus, Trash2 } from 'lucide-vue-next';
+import { Eye, Plus, Trash2, Edit, Power, PowerOff } from 'lucide-vue-next';
 
 interface Form {
     id: number;
@@ -14,6 +14,7 @@ interface Form {
     submissions_count: number;
     new_submissions_count: number;
     created_at: string;
+    is_active: boolean;
 }
 
 defineProps<{
@@ -35,6 +36,10 @@ const deleteForm = (id: number) => {
     if (confirm('Are you sure you want to delete this form?')) {
         router.delete(route('forms.destroy', id));
     }
+};
+
+const toggleStatus = (id: number) => {
+    router.post(route('forms.toggle-status', id));
 };
 </script>
 
@@ -74,10 +79,26 @@ const deleteForm = (id: number) => {
             </div>
 
             <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card v-for="form in forms" :key="form.id">
+                <Card v-for="form in forms" :key="form.id" :class="{ 'opacity-60': !form.is_active }">
                     <CardHeader>
-                        <CardTitle>{{ form.website_name }}</CardTitle>
-                        <CardDescription>{{ form.website_url }}</CardDescription>
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <CardTitle class="flex items-center gap-2">
+                                    {{ form.website_name }}
+                                    <span v-if="!form.is_active" class="text-xs font-normal text-muted-foreground">(Inactive)</span>
+                                </CardTitle>
+                                <CardDescription>{{ form.website_url }}</CardDescription>
+                            </div>
+                            <Button
+                                size="sm"
+                                :variant="form.is_active ? 'default' : 'secondary'"
+                                @click="toggleStatus(form.id)"
+                                :title="form.is_active ? 'Deactivate form' : 'Activate form'"
+                            >
+                                <Power v-if="form.is_active" class="h-4 w-4" />
+                                <PowerOff v-else class="h-4 w-4" />
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div class="mb-4 flex items-center justify-between text-sm">
@@ -93,6 +114,11 @@ const deleteForm = (id: number) => {
                                 <Link :href="route('forms.show', form.id)">
                                     <Eye class="mr-2 h-4 w-4" />
                                     View
+                                </Link>
+                            </Button>
+                            <Button as-child size="sm" variant="outline">
+                                <Link :href="route('forms.edit', form.id)">
+                                    <Edit class="h-4 w-4" />
                                 </Link>
                             </Button>
                             <Button size="sm" variant="outline" @click="deleteForm(form.id)">

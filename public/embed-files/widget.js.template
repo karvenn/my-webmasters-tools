@@ -4,51 +4,58 @@
     // Widget configuration
     const API_URL = '{{API_URL}}';
     const WIDGET_ID = 'uat-feedback-widget-' + Math.random().toString(36).substr(2, 9);
+    const BUTTON_COLOR = '{{BUTTON_COLOR}}';
+    const BUTTON_TEXT_COLOR = '{{BUTTON_TEXT_COLOR}}';
+    const BUTTON_SIZE = '{{BUTTON_SIZE}}';
+    const BUTTON_POSITION = '{{BUTTON_POSITION}}';
+    const BUTTON_TEXT = '{{BUTTON_TEXT}}';
 
     // Create styles
     const styles = `
         #${WIDGET_ID} {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            ${BUTTON_POSITION === 'bottom-right' ? 'bottom: 20px; right: 20px;' : ''}
+            ${BUTTON_POSITION === 'bottom-left' ? 'bottom: 20px; left: 20px;' : ''}
+            ${BUTTON_POSITION === 'top-right' ? 'top: 20px; right: 20px;' : ''}
+            ${BUTTON_POSITION === 'top-left' ? 'top: 20px; left: 20px;' : ''}
             z-index: 999999;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         #${WIDGET_ID} .uat-btn {
-            background: #3b82f6;
-            color: white;
+            background: ${BUTTON_COLOR};
+            color: ${BUTTON_TEXT_COLOR};
             border: none;
-            padding: 12px 24px;
+            padding: ${BUTTON_SIZE === 'small' ? '8px 16px' : BUTTON_SIZE === 'large' ? '16px 32px' : '12px 24px'};
             border-radius: 30px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: ${BUTTON_SIZE === 'small' ? '14px' : BUTTON_SIZE === 'large' ? '18px' : '16px'};
             font-weight: 500;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: all 0.3s ease;
         }
 
         #${WIDGET_ID} .uat-btn:hover {
-            background: #2563eb;
+            filter: brightness(90%);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
         }
 
         #${WIDGET_ID} .uat-drawer {
             position: fixed;
-            right: -400px;
+            ${BUTTON_POSITION.includes('right') ? 'right: -400px;' : 'left: -400px;'}
             top: 0;
             width: 400px;
             height: 100%;
             background: white;
-            box-shadow: -2px 0 12px rgba(0, 0, 0, 0.1);
-            transition: right 0.3s ease;
+            box-shadow: ${BUTTON_POSITION.includes('right') ? '-2px' : '2px'} 0 12px rgba(0, 0, 0, 0.1);
+            transition: ${BUTTON_POSITION.includes('right') ? 'right' : 'left'} 0.3s ease;
             display: flex;
             flex-direction: column;
         }
 
         #${WIDGET_ID} .uat-drawer.open {
-            right: 0;
+            ${BUTTON_POSITION.includes('right') ? 'right: 0;' : 'left: 0;'}
         }
 
         #${WIDGET_ID} .uat-header {
@@ -209,8 +216,8 @@
         }
 
         #${WIDGET_ID} .uat-submit {
-            background: #3b82f6;
-            color: white;
+            background: ${BUTTON_COLOR};
+            color: ${BUTTON_TEXT_COLOR};
             border: none;
             padding: 10px 20px;
             border-radius: 6px;
@@ -222,7 +229,7 @@
         }
 
         #${WIDGET_ID} .uat-submit:hover {
-            background: #2563eb;
+            filter: brightness(90%);
         }
 
         #${WIDGET_ID} .uat-submit:disabled {
@@ -245,7 +252,7 @@
         @media (max-width: 480px) {
             #${WIDGET_ID} .uat-drawer {
                 width: 100%;
-                right: -100%;
+                ${BUTTON_POSITION.includes('right') ? 'right: -100%;' : 'left: -100%;'}
             }
         }
     `;
@@ -258,7 +265,7 @@
     // Create widget HTML
     const widgetHTML = `
         <div id="${WIDGET_ID}">
-            <button class="uat-btn" id="uat-open-btn">Report Issue</button>
+            <button class="uat-btn" id="uat-open-btn">${BUTTON_TEXT}</button>
             <div class="uat-drawer" id="uat-drawer">
                 <div class="uat-header">
                     <h3 class="uat-title">Report an Issue</h3>

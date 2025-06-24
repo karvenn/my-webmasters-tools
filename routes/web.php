@@ -16,7 +16,9 @@ Route::get('dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('forms', \App\Http\Controllers\FormController::class)->except(['edit', 'update']);
+    Route::resource('forms', \App\Http\Controllers\FormController::class);
+    Route::post('forms/{form}/toggle-status', [\App\Http\Controllers\FormController::class, 'toggleStatus'])
+        ->name('forms.toggle-status');
     Route::patch('forms/{form}/submissions/{submission}/status', [\App\Http\Controllers\FormSubmissionController::class, 'updateStatus'])
         ->name('forms.submissions.update-status');
     Route::delete('forms/{form}/submissions/{submission}', [\App\Http\Controllers\FormSubmissionController::class, 'destroy'])

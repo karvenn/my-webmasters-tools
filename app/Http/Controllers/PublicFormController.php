@@ -27,6 +27,30 @@ class PublicFormController extends Controller
                 ->header('Access-Control-Allow-Origin', '*');
         }
 
+        // Check if form is active
+        if (!$form->is_active) {
+            \Log::error('UAT Form is not active', ['token' => $token]);
+            return response()->json(['error' => 'Form is not active'], 403)
+                ->header('Access-Control-Allow-Origin', '*');
+        }
+
+        // Check domain validation
+        $origin = $request->header('Origin');
+        if ($origin) {
+            $parsedUrl = parse_url($origin);
+            $domain = $parsedUrl['host'] ?? '';
+            
+            if (!$form->isDomainAllowed($domain)) {
+                \Log::error('UAT Form submission from unauthorized domain', [
+                    'token' => $token,
+                    'domain' => $domain,
+                    'allowed_domains' => $form->allowed_domains,
+                ]);
+                return response()->json(['error' => 'Domain not authorized'], 403)
+                    ->header('Access-Control-Allow-Origin', '*');
+            }
+        }
+
         try {
             $validated = $request->validate([
             'issue_description' => 'required|string|max:5000',
@@ -151,6 +175,30 @@ class PublicFormController extends Controller
                 ->header('Content-Type', 'application/javascript');
         }
 
+        // Check if form is active
+        if (!$form->is_active) {
+            return response('// UAT Widget: Form is not active', 403)
+                ->header('Content-Type', 'application/javascript');
+        }
+
+        // Get the referrer domain
+        $referrer = $request->header('Referer');
+        if ($referrer) {
+            $parsedUrl = parse_url($referrer);
+            $domain = $parsedUrl['host'] ?? '';
+            
+            // Check if domain is allowed
+            if (!$form->isDomainAllowed($domain)) {
+                \Log::warning('UAT Widget: Domain not allowed', [
+                    'form_id' => $form->id,
+                    'domain' => $domain,
+                    'allowed_domains' => $form->allowed_domains,
+                ]);
+                return response('// UAT Widget: Domain not authorized', 403)
+                    ->header('Content-Type', 'application/javascript');
+            }
+        }
+
         $widgetPath = public_path('embed-files/widget.js.template');
         
         if (!file_exists($widgetPath)) {
@@ -159,7 +207,20 @@ class PublicFormController extends Controller
         }
 
         $content = file_get_contents($widgetPath);
-        $content = str_replace('{{API_URL}}', config('app.url') . '/api/submit/' . $token, $content);
+        
+        // Replace placeholders with form customization values
+        $replacements = [
+            '{{API_URL}}' => config('app.url') . '/api/submit/' . $token,
+            '{{BUTTON_COLOR}}' => $form->button_color ?? '#3b82f6',
+            '{{BUTTON_TEXT_COLOR}}' => $form->button_text_color ?? '#ffffff',
+            '{{BUTTON_SIZE}}' => $form->button_size ?? 'medium',
+            '{{BUTTON_POSITION}}' => $form->button_position ?? 'bottom-right',
+            '{{BUTTON_TEXT}}' => $form->button_text ?? 'Report Issue',
+        ];
+        
+        foreach ($replacements as $placeholder => $value) {
+            $content = str_replace($placeholder, $value, $content);
+        }
         
         return response($content)
             ->header('Content-Type', 'application/javascript')

@@ -8,8 +8,23 @@ import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Plus, X } from 'lucide-vue-next';
+import { ChevronLeft, Plus, X } from 'lucide-vue-next';
 import { ref, watch, computed } from 'vue';
+
+const props = defineProps<{
+    form: {
+        id: number;
+        website_name: string;
+        website_url: string;
+        is_active: boolean;
+        button_color: string;
+        button_text_color: string;
+        button_size: 'small' | 'medium' | 'large';
+        button_position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+        button_text: string;
+        allowed_domains: string[];
+    };
+}>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -21,20 +36,24 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/forms',
     },
     {
-        title: 'Create Form',
-        href: '/forms/create',
+        title: props.form.website_name,
+        href: `/forms/${props.form.id}`,
+    },
+    {
+        title: 'Edit',
+        href: `/forms/${props.form.id}/edit`,
     },
 ];
 
 const form = useForm({
-    website_name: '',
-    website_url: '',
-    button_color: '#3b82f6',
-    button_text_color: '#ffffff',
-    button_size: 'medium' as 'small' | 'medium' | 'large',
-    button_position: 'bottom-right' as 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left',
-    button_text: 'Report Issue',
-    allowed_domains: [] as string[],
+    website_name: props.form.website_name,
+    website_url: props.form.website_url,
+    button_color: props.form.button_color || '#3b82f6',
+    button_text_color: props.form.button_text_color || '#ffffff',
+    button_size: props.form.button_size || 'medium',
+    button_position: props.form.button_position || 'bottom-right',
+    button_text: props.form.button_text || 'Report Issue',
+    allowed_domains: props.form.allowed_domains || [],
 });
 
 const newDomain = ref('');
@@ -48,6 +67,10 @@ const addDomain = () => {
 
 const removeDomain = (index: number) => {
     form.allowed_domains.splice(index, 1);
+};
+
+const submit = () => {
+    form.put(route('forms.update', props.form.id));
 };
 
 // Button preview styles
@@ -82,28 +105,30 @@ watch(() => form.website_url, (newUrl) => {
         // Invalid URL, ignore
     }
 });
-
-const submit = () => {
-    form.post(route('forms.store'));
-};
 </script>
 
 <template>
-    <Head title="Create UAT Form" />
+    <Head title="Edit UAT Form" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 p-4">
-            <div>
-                <h1 class="text-2xl font-bold">Create UAT Form</h1>
-                <p class="text-muted-foreground">Set up a new form to collect user feedback</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Edit UAT Form</h1>
+                    <p class="text-muted-foreground">Update form settings and customization options</p>
+                </div>
+                <Button variant="outline" @click="$inertia.visit(route('forms.show', form.id))">
+                    <ChevronLeft class="mr-2 h-4 w-4" />
+                    Back to Form
+                </Button>
             </div>
 
             <form @submit.prevent="submit" class="grid gap-6 max-w-4xl">
                 <!-- Basic Information -->
                 <Card>
                     <CardHeader>
-                        <CardTitle>Website Information</CardTitle>
-                        <CardDescription>Enter the details of the website where you'll embed the UAT form</CardDescription>
+                        <CardTitle>Basic Information</CardTitle>
+                        <CardDescription>Update the website details for this form</CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <div>
@@ -220,10 +245,10 @@ const submit = () => {
                 <!-- Domain Management -->
                 <Card>
                     <CardHeader>
-                        <CardTitle>Allowed Domains (Optional)</CardTitle>
+                        <CardTitle>Allowed Domains</CardTitle>
                         <CardDescription>
                             Specify which domains can display the feedback widget. 
-                            Leave empty to allow all domains. Use wildcards like *.example.com for subdomains.
+                            Use wildcards like *.example.com to allow all subdomains.
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-4">
@@ -257,7 +282,7 @@ const submit = () => {
                             </div>
                         </div>
                         <p v-else class="text-sm text-muted-foreground">
-                            No domains specified. The form will extract the domain from your website URL.
+                            No domains specified. The widget will be accessible from any domain.
                         </p>
                         <InputError :message="form.errors.allowed_domains" class="mt-2" />
                     </CardContent>
@@ -266,9 +291,9 @@ const submit = () => {
                 <!-- Form Actions -->
                 <div class="flex gap-2">
                     <Button type="submit" :disabled="form.processing">
-                        Create Form
+                        Save Changes
                     </Button>
-                    <Button type="button" variant="outline" @click="$inertia.visit(route('forms.index'))">
+                    <Button type="button" variant="outline" @click="$inertia.visit(route('forms.show', form.id))">
                         Cancel
                     </Button>
                 </div>
