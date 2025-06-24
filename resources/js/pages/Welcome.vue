@@ -5,7 +5,8 @@ import { onMounted, onUnmounted } from 'vue';
 // Add UAT widget for testing
 onMounted(() => {
     const script = document.createElement('script');
-    script.src = 'http://webmasters_tools.test/embed/widget.js?token=pzMvdfNxnwLPzLRHAkuyiGd2ter9pzjQ&v=' + Date.now();
+    // Use current origin to work in both local and production
+    script.src = window.location.origin + '/embed/widget.js?token=pzMvdfNxnwLPzLRHAkuyiGd2ter9pzjQ&v=' + Date.now();
     script.async = true;
     script.id = 'uat-widget-script';
     document.body.appendChild(script);
