@@ -514,23 +514,56 @@
         const ua = navigator.userAgent;
         const platform = navigator.platform;
         
-        if (ua.includes('Windows NT 10.0')) return 'Windows 10';
-        if (ua.includes('Windows NT 11.0')) return 'Windows 11';
-        if (ua.includes('Mac OS X')) {
-            const match = ua.match(/Mac OS X (\d+[._]\d+)/);
-            return match ? `macOS ${match[1].replace('_', '.')}` : 'macOS';
+        // Windows detection - Windows 11 reports as NT 10.0 but has specific features
+        if (ua.includes('Windows NT 10.0')) {
+            // Check for Windows 11 indicators
+            if (ua.includes('Windows NT 10.0; Win64; x64') && parseInt(ua.match(/Chrome\/(\d+)/)?.[1]) >= 94) {
+                return 'Windows 10/11'; // Can't reliably distinguish
+            }
+            return 'Windows 10';
         }
+        if (ua.includes('Windows NT 6.3')) return 'Windows 8.1';
+        if (ua.includes('Windows NT 6.2')) return 'Windows 8';
+        if (ua.includes('Windows NT 6.1')) return 'Windows 7';
+        if (ua.includes('Windows NT')) return 'Windows';
+        
+        // macOS detection - more reliable pattern
+        if (ua.includes('Mac OS X') || platform.includes('Mac')) {
+            const match = ua.match(/Mac OS X (\d+[._]\d+)/);
+            if (match) {
+                const version = match[1].replace(/_/g, '.');
+                return `macOS ${version}`;
+            }
+            return 'macOS';
+        }
+        
+        // iOS detection - check platform first for reliability
+        if (platform.includes('iPhone') || platform.includes('iPad') || platform.includes('iPod')) {
+            const match = ua.match(/OS (\d+[._]\d+)/);
+            if (match) {
+                const version = match[1].replace(/_/g, '.');
+                return `iOS ${version}`;
+            }
+            return 'iOS';
+        }
+        
+        // Android detection
         if (ua.includes('Android')) {
             const match = ua.match(/Android (\d+\.?\d*)/);
             return match ? `Android ${match[1]}` : 'Android';
         }
-        if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) {
-            const match = ua.match(/OS (\d+[._]\d+)/);
-            return match ? `iOS ${match[1].replace('_', '.')}` : 'iOS';
-        }
-        if (ua.includes('Linux')) return 'Linux';
         
-        return platform || 'Unknown';
+        // Linux detection
+        if (ua.includes('Linux') || platform.includes('Linux')) {
+            if (ua.includes('Ubuntu')) return 'Ubuntu Linux';
+            if (ua.includes('Debian')) return 'Debian Linux';
+            if (ua.includes('Fedora')) return 'Fedora Linux';
+            if (ua.includes('CrOS')) return 'Chrome OS';
+            return 'Linux';
+        }
+        
+        // Fallback
+        return 'Unknown OS';
     }
 
     // Get device type
@@ -566,7 +599,6 @@
             technical_metadata: {
                 // Screen details
                 pixel_ratio: window.devicePixelRatio || 1,
-                color_depth: screen.colorDepth,
                 orientation: screen.orientation?.type || 'unknown',
                 
                 // Window details
@@ -584,18 +616,12 @@
                 do_not_track: navigator.doNotTrack || 'unspecified',
                 language: navigator.language,
                 languages: navigator.languages || [navigator.language],
-                platform: navigator.platform,
-                
-                // Network
-                online_status: navigator.onLine,
-                connection_type: navigator.connection?.effectiveType || 'unknown',
                 
                 // Page info
                 referrer: document.referrer || 'direct',
                 page_title: document.title,
                 
                 // User preferences
-                prefers_color_scheme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
                 prefers_reduced_motion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
                 
                 // Time
