@@ -39,7 +39,10 @@ const deleteButton = (id: number) => {
 };
 
 const toggleStatus = (id: number) => {
-    router.post(route('cta-buttons.toggle-status', id));
+    router.post(route('cta-buttons.toggle-status', id), {}, {
+        preserveScroll: true,
+        preserveState: false,
+    });
 };
 </script>
 
@@ -118,7 +121,12 @@ const toggleStatus = (id: number) => {
                         </div>
                         <div class="mt-4 flex gap-2">
                             <Button size="sm" variant="outline" as-child class="flex-1">
-                                <Link :href="route('cta-buttons.edit', button.id)">
+                                <Link 
+                                    :href="route('cta-buttons.edit', button.id)" 
+                                    :data="{ timestamp: Date.now() }"
+                                    preserve-scroll
+                                    :preserve-state="false"
+                                >
                                     <Edit class="mr-2 h-3 w-3" />
                                     Edit
                                 </Link>

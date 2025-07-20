@@ -15,26 +15,27 @@ withDefaults(defineProps<Props>(), {
 });
 
 // Add UAT widget to all authenticated pages
-onMounted(() => {
-    const script = document.createElement('script');
-    script.src = 'http://webmasters_tools.test/embed/widget.js?token=pzMvdfNxnwLPzLRHAkuyiGd2ter9pzjQ&v=' + Date.now();
-    script.async = true;
-    script.id = 'uat-widget-script-app';
-    document.body.appendChild(script);
-});
+// TODO: Update with correct UAT widget URL
+// onMounted(() => {
+//     const script = document.createElement('script');
+//     script.src = 'http://webmasters_tools.test/embed/widget.js?token=pzMvdfNxnwLPzLRHAkuyiGd2ter9pzjQ&v=' + Date.now();
+//     script.async = true;
+//     script.id = 'uat-widget-script-app';
+//     document.body.appendChild(script);
+// });
 
-onUnmounted(() => {
-    // Clean up the script and widget when component unmounts
-    const script = document.getElementById('uat-widget-script-app');
-    if (script) {
-        script.remove();
-    }
-    // Remove the widget container if it exists
-    const widgetContainer = document.querySelector('[id^="uat-feedback-widget-"]');
-    if (widgetContainer) {
-        widgetContainer.remove();
-    }
-});
+// onUnmounted(() => {
+//     // Clean up the script and widget when component unmounts
+//     const script = document.getElementById('uat-widget-script-app');
+//     if (script) {
+//         script.remove();
+//     }
+//     // Remove the widget container if it exists
+//     const widgetContainer = document.querySelector('[id^="uat-feedback-widget-"]');
+//     if (widgetContainer) {
+//         widgetContainer.remove();
+//     }
+// });
 </script>
 
 <template>

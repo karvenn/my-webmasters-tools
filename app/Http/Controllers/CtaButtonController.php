@@ -144,6 +144,9 @@ class CtaButtonController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        // Ensure is_active is always set (handle unchecked checkbox)
+        $validated['is_active'] = $request->boolean('is_active');
+
         $ctaButton->update($validated);
 
         return redirect()->back()->with('success', 'CTA button updated successfully');

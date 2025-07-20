@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
@@ -54,7 +53,15 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Button settings form
+// Debug logging
+console.log('Edit page - Button data received:', {
+    id: props.button.id,
+    name: props.button.button_name,
+    is_active: props.button.is_active,
+    type: typeof props.button.is_active
+});
+
+// Button settings form - directly use props
 const buttonForm = useForm({
     button_name: props.button.button_name,
     button_text: props.button.button_text,
@@ -63,8 +70,11 @@ const buttonForm = useForm({
     button_size: props.button.button_size,
     button_position: props.button.button_position,
     allowed_domains: props.button.allowed_domains || [''],
-    is_active: props.button.is_active,
+    is_active: props.button.is_active === true, // Ensure boolean
 });
+
+// Debug form value
+console.log('Form initialized with is_active:', buttonForm.is_active);
 
 // URL rule form
 const ruleForm = useForm({
@@ -79,6 +89,16 @@ const ruleForm = useForm({
 const testUrl = ref('');
 const testResult = ref<any>(null);
 const copied = ref(false);
+
+// Edit mode for rules
+const editingRuleId = ref<number | null>(null);
+const editRuleForm = useForm({
+    url_pattern: '',
+    destination_url: '',
+    pattern_description: '',
+    priority: 0,
+    is_active: true,
+});
 
 const addDomain = () => {
     buttonForm.allowed_domains.push('');
@@ -106,6 +126,30 @@ const deleteRule = (rule: CtaButtonRule) => {
             preserveScroll: true,
         });
     }
+};
+
+const startEditRule = (rule: CtaButtonRule) => {
+    editingRuleId.value = rule.id;
+    editRuleForm.url_pattern = rule.url_pattern;
+    editRuleForm.destination_url = rule.destination_url;
+    editRuleForm.pattern_description = rule.pattern_description || '';
+    editRuleForm.priority = rule.priority;
+    editRuleForm.is_active = rule.is_active;
+};
+
+const cancelEditRule = () => {
+    editingRuleId.value = null;
+    editRuleForm.reset();
+};
+
+const updateRule = (ruleId: number) => {
+    editRuleForm.put(route('cta-buttons.rules.update', [props.button.id, ruleId]), {
+        onSuccess: () => {
+            editingRuleId.value = null;
+            editRuleForm.reset();
+        },
+        preserveScroll: true,
+    });
 };
 
 const testPattern = async () => {
@@ -202,11 +246,14 @@ const copyEmbedCode = async () => {
 
                             <!-- Status -->
                             <div class="flex items-center space-x-2">
-                                <Checkbox
+                                <input
                                     id="is_active"
-                                    v-model:checked="buttonForm.is_active"
+                                    type="checkbox"
+                                    v-model="buttonForm.is_active"
+                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                 />
                                 <Label for="is_active">Active</Label>
+                                <span class="text-xs text-gray-500 ml-2">({{ buttonForm.is_active ? 'Yes' : 'No' }})</span>
                             </div>
                         </div>
 
@@ -323,9 +370,11 @@ const copyEmbedCode = async () => {
                                     Add Rule
                                 </Button>
                                 <div class="flex items-center space-x-2">
-                                    <Checkbox
+                                    <input
                                         id="rule_active"
-                                        v-model:checked="ruleForm.is_active"
+                                        type="checkbox"
+                                        v-model="ruleForm.is_active"
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                     />
                                     <Label for="rule_active">Active</Label>
                                 </div>
@@ -374,7 +423,78 @@ const copyEmbedCode = async () => {
                                 class="p-4 border rounded-lg"
                                 :class="rule.is_active ? 'bg-background border-border' : 'bg-muted border-muted'"
                             >
-                                <div class="flex items-start justify-between">
+                                <!-- Edit Mode -->
+                                <div v-if="editingRuleId === rule.id" class="space-y-4">
+                                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div>
+                                            <Label>URL Pattern</Label>
+                                            <Input
+                                                v-model="editRuleForm.url_pattern"
+                                                type="text"
+                                                required
+                                            />
+                                            <p v-if="editRuleForm.errors.url_pattern" class="mt-1 text-sm text-red-600">
+                                                {{ editRuleForm.errors.url_pattern }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <Label>Destination URL</Label>
+                                            <Input
+                                                v-model="editRuleForm.destination_url"
+                                                type="url"
+                                                required
+                                            />
+                                            <p v-if="editRuleForm.errors.destination_url" class="mt-1 text-sm text-red-600">
+                                                {{ editRuleForm.errors.destination_url }}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <Label>Description (Optional)</Label>
+                                            <Input
+                                                v-model="editRuleForm.pattern_description"
+                                                type="text"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Priority</Label>
+                                            <Input
+                                                v-model.number="editRuleForm.priority"
+                                                type="number"
+                                                min="0"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                v-model="editRuleForm.is_active"
+                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <Label>Active</Label>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <Button
+                                                @click="updateRule(rule.id)"
+                                                :disabled="editRuleForm.processing"
+                                                size="sm"
+                                            >
+                                                Save
+                                            </Button>
+                                            <Button
+                                                @click="cancelEditRule"
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- View Mode -->
+                                <div v-else class="flex items-start justify-between">
                                     <div class="flex-1">
                                         <div class="flex items-center space-x-2">
                                             <code class="text-sm bg-muted px-2 py-1 rounded">{{ rule.url_pattern }}</code>
@@ -392,14 +512,23 @@ const copyEmbedCode = async () => {
                                             <span v-if="rule.clicks_count"> • Clicks: {{ rule.clicks_count }}</span>
                                         </div>
                                     </div>
-                                    <Button
-                                        @click="deleteRule(rule)"
-                                        variant="outline"
-                                        size="sm"
-                                        class="text-red-600 hover:text-red-700"
-                                    >
-                                        Delete
-                                    </Button>
+                                    <div class="flex space-x-2">
+                                        <Button
+                                            @click="startEditRule(rule)"
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            @click="deleteRule(rule)"
+                                            variant="outline"
+                                            size="sm"
+                                            class="text-red-600 hover:text-red-700"
+                                        >
+                                            Delete
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
