@@ -14,6 +14,16 @@ Route::middleware([\App\Http\Middleware\HandleCors::class])->group(function () {
         return response('', 200);
     });
     
+    // CTA widget API routes
+    Route::get('/cta/rules/{token}', [\App\Http\Controllers\PublicCtaController::class, 'rules']);
+    Route::post('/cta/click/{token}', [\App\Http\Controllers\PublicCtaController::class, 'trackClick']);
+    Route::options('/cta/rules/{token}', function () {
+        return response('', 200);
+    });
+    Route::options('/cta/click/{token}', function () {
+        return response('', 200);
+    });
+    
     // Debug endpoint
     Route::get('/test-cors', function () {
         return response()->json([

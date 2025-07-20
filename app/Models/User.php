@@ -51,4 +51,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Form::class);
     }
+
+    public function ctaButtons(): HasMany
+    {
+        return $this->hasMany(CtaButton::class);
+    }
 }
